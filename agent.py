@@ -20,7 +20,14 @@ logger = logging.getLogger(__name__)
 
 IST = ZoneInfo("Asia/Kolkata")
 
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+_api_key = os.getenv("ANTHROPIC_API_KEY", "")
+if not _api_key:
+    logger.error("ANTHROPIC_API_KEY is not set or empty!")
+elif not _api_key.startswith("sk-ant-"):
+    logger.error(f"ANTHROPIC_API_KEY looks wrong — starts with: {_api_key[:15]}...")
+else:
+    logger.info(f"ANTHROPIC_API_KEY loaded OK — starts with: {_api_key[:15]}...")
+client = anthropic.Anthropic(api_key=_api_key)
 
 # ── In-memory conversation store (per phone number) ───────────────────────────
 # For production you'd use Redis; this works fine for the demo.
