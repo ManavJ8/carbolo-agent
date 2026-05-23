@@ -1,0 +1,153 @@
+{
+  "Maruti Brezza": {
+    "VXi": {
+      "engine": "1.5L petrol, 103 bhp",
+      "mileage": "19.8 kmpl (claimed)",
+      "transmission": "5-speed manual",
+      "sunroof": false,
+      "camera_360": false,
+      "airbags": 6,
+      "features": ["6 airbags", "rear AC vents", "7-inch touchscreen infotainment", "Apple CarPlay", "Android Auto", "automatic climate control"],
+      "price_ex_showroom": "9.70L",
+      "colors": ["White", "Grey", "Blue"],
+      "fuel": "Petrol",
+      "seating": 5
+    },
+    "ZXi": {
+      "engine": "1.5L petrol, 103 bhp",
+      "mileage": "19.8 kmpl (claimed)",
+      "transmission": "5-speed manual",
+      "sunroof": false,
+      "camera_360": false,
+      "airbags": 6,
+      "features": ["6 airbags", "rear AC vents", "9-inch touchscreen infotainment", "Apple CarPlay", "Android Auto", "automatic climate control", "cruise control", "LED headlamps"],
+      "price_ex_showroom": "11.40L",
+      "colors": ["White", "Grey", "Blue", "Red"],
+      "fuel": "Petrol",
+      "seating": 5
+    },
+    "ZXi+": {
+      "engine": "1.5L petrol, 103 bhp",
+      "mileage": "19.1 kmpl (claimed)",
+      "transmission": "6-speed AT (automatic)",
+      "sunroof": true,
+      "camera_360": true,
+      "airbags": 6,
+      "features": ["6 airbags", "panoramic sunroof", "360-degree camera", "9-inch touchscreen", "Apple CarPlay", "Android Auto", "automatic climate control", "cruise control", "LED headlamps", "heads-up display"],
+      "price_ex_showroom": "13.20L",
+      "colors": ["White", "Red", "Black", "Grey"],
+      "fuel": "Petrol",
+      "seating": 5
+    }
+  },
+  "Maruti Swift": {
+    "VXi": {
+      "engine": "1.2L petrol, 82 bhp",
+      "mileage": "23.76 kmpl (claimed)",
+      "transmission": "5-speed manual",
+      "sunroof": false,
+      "camera_360": false,
+      "airbags": 2,
+      "features": ["2 airbags", "7-inch touchscreen", "Apple CarPlay", "Android Auto", "rear parking sensors"],
+      "price_ex_showroom": "7.19L",
+      "colors": ["White", "Silver", "Blue", "Red"],
+      "fuel": "Petrol",
+      "seating": 5
+    },
+    "ZXi": {
+      "engine": "1.2L petrol, 82 bhp",
+      "mileage": "23.76 kmpl (claimed)",
+      "transmission": "5-speed manual",
+      "sunroof": false,
+      "camera_360": false,
+      "airbags": 6,
+      "features": ["6 airbags", "9-inch touchscreen", "Apple CarPlay", "Android Auto", "rear camera", "automatic climate control", "LED headlamps"],
+      "price_ex_showroom": "8.69L",
+      "colors": ["White", "Silver", "Blue", "Red", "Orange"],
+      "fuel": "Petrol",
+      "seating": 5
+    },
+    "ZXi+": {
+      "engine": "1.2L petrol, 82 bhp",
+      "mileage": "23.76 kmpl (claimed)",
+      "transmission": "5-speed AMT (auto)",
+      "sunroof": true,
+      "camera_360": false,
+      "airbags": 6,
+      "features": ["6 airbags", "sunroof", "9-inch touchscreen", "Apple CarPlay", "Android Auto", "360-camera", "automatic climate control", "LED headlamps", "wireless charging"],
+      "price_ex_showroom": "9.73L",
+      "colors": ["White", "Silver", "Blue", "Red", "Orange"],
+      "fuel": "Petrol",
+      "seating": 5
+    }
+  },
+  "Maruti Baleno": {
+    "Sigma": {
+      "engine": "1.2L petrol, 88 bhp",
+      "mileage": "22.35 kmpl (claimed)",
+      "transmission": "5-speed manual",
+      "sunroof": false,
+      "camera_360": false,
+      "airbags": 2,
+      "features": ["2 airbags", "7-inch infotainment", "rear parking sensors", "halogen headlamps"],
+      "price_ex_showroom": "6.61L",
+      "colors": ["White", "Silver", "Grey"],
+      "fuel": "Petrol",
+      "seating": 5
+    },
+    "Delta": {
+      "engine": "1.2L petrol, 88 bhp",
+      "mileage": "22.35 kmpl (claimed)",
+      "transmission": "5-speed manual",
+      "sunroof": false,
+      "camera_360": false,
+      "airbags": 2,
+      "features": ["2 airbags", "9-inch SmartPlay Pro touchscreen", "Apple CarPlay", "Android Auto", "rear camera", "automatic climate control"],
+      "price_ex_showroom": "7.45L",
+      "colors": ["White", "Silver", "Grey", "Blue"],
+      "fuel": "Petrol",
+      "seating": 5
+    },
+    "Alpha": {
+      "engine": "1.2L petrol, 88 bhp",
+      "mileage": "22.35 kmpl (claimed)",
+      "transmission": "5-speed manual / CVT auto",
+      "sunroof": true,
+      "camera_360": false,
+      "airbags": 6,
+      "features": ["6 airbags", "sunroof", "9-inch SmartPlay Pro touchscreen", "Apple CarPlay", "Android Auto", "360-camera", "automatic climate control", "LED headlamps", "HUD", "wireless charging", "360-degree camera"],
+      "price_ex_showroom": "9.92L",
+      "colors": ["White", "Silver", "Grey", "Blue", "Red"],
+      "fuel": "Petrol",
+      "seating": 5
+    }
+  },
+  "Maruti Ertiga": {
+    "VXi": {
+      "engine": "1.5L petrol, 103 bhp",
+      "mileage": "20.3 kmpl (claimed)",
+      "transmission": "5-speed manual",
+      "sunroof": false,
+      "camera_360": false,
+      "airbags": 2,
+      "features": ["2 airbags", "7-inch touchscreen", "Apple CarPlay", "Android Auto", "rear AC vents", "third-row seating"],
+      "price_ex_showroom": "8.69L",
+      "colors": ["White", "Silver", "Grey", "Brown"],
+      "fuel": "Petrol / CNG",
+      "seating": 7
+    },
+    "ZXi+": {
+      "engine": "1.5L petrol, 103 bhp",
+      "mileage": "20.3 kmpl (claimed)",
+      "transmission": "4-speed AT (automatic)",
+      "sunroof": false,
+      "camera_360": false,
+      "airbags": 6,
+      "features": ["6 airbags", "9-inch touchscreen", "Apple CarPlay", "Android Auto", "rear AC vents", "third-row seating", "automatic climate control", "LED headlamps", "rear camera"],
+      "price_ex_showroom": "11.96L",
+      "colors": ["White", "Silver", "Grey", "Brown", "Red"],
+      "fuel": "Petrol / CNG",
+      "seating": 7
+    }
+  }
+}
