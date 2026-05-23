@@ -51,40 +51,36 @@ def stop_scheduler():
 
 def send_whatsapp_message(to_phone: str, message: str) -> bool:
     """
-    Send a WhatsApp message via Meta Cloud API.
+    Send a WhatsApp message via Twilio.
     Returns True on success, False on failure.
     """
-    token = os.getenv("WHATSAPP_TOKEN")
-    phone_number_id = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
+    account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+    auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+    from_number = os.getenv("TWILIO_WHATSAPP_NUMBER", "whatsapp:+14155238886")
 
-    if not token or not phone_number_id:
-        logger.error("WhatsApp credentials not set in environment")
+    if not account_sid or not auth_token:
+        logger.error("Twilio credentials not set in environment")
         return False
 
-    # Normalise phone: must start with country code, no + or spaces
-    phone = to_phone.strip().lstrip("+").replace(" ", "").replace("-", "")
-
-    url = f"https://graph.facebook.com/v19.0/{phone_number_id}/messages"
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "messaging_product": "whatsapp",
-        "to": phone,
-        "type": "text",
-        "text": {"body": message},
-    }
+    # Format number correctly for Twilio — must be "whatsapp:+91XXXXXXXXXX"
+    phone = to_phone.strip()
+    if not phone.startswith("+"):
+        phone = "+" + phone
+    to_whatsapp = f"whatsapp:{phone}"
 
     try:
-        resp = requests.post(url, json=payload, headers=headers, timeout=10)
-        resp.raise_for_status()
-        logger.info(f"WhatsApp message sent to {phone}")
+        from twilio.rest import Client
+        client = Client(account_sid, auth_token)
+        msg = client.messages.create(
+            from_=from_number,
+            to=to_whatsapp,
+            body=message,
+        )
+        logger.info(f"Reminder sent via Twilio: {msg.sid}")
         return True
-    except requests.exceptions.RequestException as e:
-        logger.error(f"WhatsApp send failed to {phone}: {e}")
+    except Exception as e:
+        logger.error(f"Twilio send failed to {phone}: {e}")
         return False
-
 
 # ── Reminder job functions ─────────────────────────────────────────────────────
 
