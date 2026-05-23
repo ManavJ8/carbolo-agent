@@ -45,7 +45,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-
+async def _handle_message(from_: str, phone: str, text: str):
+    """Process message and reply in background."""
+    try:
+        reply = run_agent(phone=phone, user_message=text)
+        _send_twilio_reply(to=from_, message=reply)
+    except Exception as e:
+        logger.error(f"Error handling message: {e}")
+        
 @app.post("/webhook")
 async def receive_message(
     Body: str = Form(None),
@@ -73,11 +80,10 @@ async def receive_message(
 
     logger.info(f"Message from {phone}: {text[:80]}")
 
-    # Run agent
-    reply = run_agent(phone=phone, user_message=text)
-
-    # Send reply via Twilio
-    _send_twilio_reply(to=From, message=reply)
+    # Run agent in background so we return 200 immediately
+    # This prevents Twilio from retrying the webhook
+    import asyncio
+    asyncio.create_task(_handle_message(From, phone, text))
 
     return PlainTextResponse("ok")
 
