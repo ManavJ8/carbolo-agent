@@ -1,3 +1,53 @@
-.env
-venv/
+# Python
 __pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Environment Variables
+.env
+
+# Google / Service Account Credentials
+service_account.json
+service_account*.json
+credentials.json
+*.pem
+*.key
+
+# IDE Files
+.vscode/
+.idea/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Temporary Files
+temp/
+tmp/
+
+# Audio / Generated Files
+*.wav
+*.mp3
+
+# Images
+captured_image.jpg
+
+# Database Files
+*.db
+*.sqlite3
