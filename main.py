@@ -1,8 +1,9 @@
 import os
 import logging
 from contextlib import asynccontextmanager
+from concurrent.futures import ThreadPoolExecutor
 
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Form
 from fastapi.responses import PlainTextResponse
 from dotenv import load_dotenv
 from twilio.rest import Client as TwilioClient
@@ -24,6 +25,9 @@ TWILIO_WHATSAPP_NUMBER = os.getenv("TWILIO_WHATSAPP_NUMBER", "whatsapp:+14155238
 
 twilio_client = TwilioClient(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
+# Thread pool for processing messages in background
+executor = ThreadPoolExecutor(max_workers=5)
+
 # Seen message IDs to prevent duplicates
 _seen_message_ids: set[str] = set()
 _seen_message_ids_order: list[str] = []
@@ -37,6 +41,7 @@ async def lifespan(app: FastAPI):
     yield
     logger.info("Shutting down Carbolo Agent...")
     stop_scheduler()
+    executor.shutdown(wait=False)
 
 
 app = FastAPI(
@@ -45,25 +50,34 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-async def _handle_message(from_: str, phone: str, text: str):
-    """Process message and reply in background."""
+
+def _process_message(from_: str, phone: str, text: str):
+    """
+    Process message and send reply in a background thread.
+    Runs outside the async event loop so no asyncio conflicts.
+    """
     try:
         reply = run_agent(phone=phone, user_message=text)
         _send_twilio_reply(to=from_, message=reply)
     except Exception as e:
-        logger.error(f"Error handling message: {e}")
-        
+        logger.error(f"Error processing message from {phone}: {e}")
+
+
 @app.post("/webhook")
 async def receive_message(
     Body: str = Form(None),
     From: str = Form(None),
     MessageSid: str = Form(None),
 ):
-    """Handle incoming Twilio WhatsApp messages."""
+    """
+    Handle incoming Twilio WhatsApp messages.
+    Returns 200 immediately to prevent Twilio retrying.
+    Processes the message in a background thread.
+    """
     if not Body or not From:
         return PlainTextResponse("ok")
 
-    # Deduplicate
+    # Deduplicate — Twilio sometimes delivers same message twice
     if MessageSid and MessageSid in _seen_message_ids:
         logger.info(f"Duplicate message {MessageSid} ignored")
         return PlainTextResponse("ok")
@@ -80,10 +94,9 @@ async def receive_message(
 
     logger.info(f"Message from {phone}: {text[:80]}")
 
-    # Run agent in background so we return 200 immediately
-    # This prevents Twilio from retrying the webhook
-    import asyncio
-    asyncio.create_task(_handle_message(From, phone, text))
+    # Submit to thread pool and return 200 immediately
+    # This prevents Twilio from timing out and retrying
+    executor.submit(_process_message, From, phone, text)
 
     return PlainTextResponse("ok")
 
