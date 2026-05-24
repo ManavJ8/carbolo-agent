@@ -4,22 +4,42 @@ An AI-powered WhatsApp agent that books car test drives end-to-end. Built for In
 
 ---
 
+## 🧪 Test the Live Bot
+
+**WhatsApp Number:** +1 415 523 8886 (Twilio Sandbox)
+
+```
+Step 1: Save +1 415 523 8886 on your phone
+Step 2: Send this WhatsApp message to join:
+        join <your-keyword>
+Step 3: After joining, message freely to test
+```
+
+**Try these messages:**
+- `"hi"`
+- `"brezza vxi me sunroof hai?"`
+- `"test drive book karna hai this weekend"`
+- `"Baleno Alpha ka price kitna hai?"`
+
+---
+
 ## Architecture
 
 ```
 Customer (WhatsApp)
        │
        ▼
-Meta WhatsApp Cloud API
+Twilio WhatsApp Sandbox
        │  webhook POST /webhook
        ▼
 ┌─────────────────────────┐
 │   FastAPI (main.py)     │  ← receives & sends WhatsApp messages
-└────────────┬────────────┘
+│   ThreadPoolExecutor    │    returns 200 immediately, processes
+└────────────┬────────────┘    in background thread
              │
              ▼
 ┌─────────────────────────┐
-│   Agent (agent.py)      │  ← Claude claude-haiku-4-5 with tool calling
+│   Agent (agent.py)      │  ← Claude Haiku with tool calling
 │   + KB context inject   │    conversation history per phone number
 └────────┬────────────────┘
          │  tool calls
@@ -32,7 +52,7 @@ availability  drive
          ▼
 ┌─────────────────────────┐
 │  Google Calendar API    │  ← real FreeBusy query + event creation
-│  (service account)      │
+│  (service account)      │    idempotent — no duplicate events
 └─────────────────────────┘
          │ on booking
          ▼
@@ -42,7 +62,7 @@ availability  drive
 └────────────┬────────────┘
              │ at trigger time
              ▼
-Meta WhatsApp Cloud API  →  Customer gets reminder
+Twilio WhatsApp  →  Customer gets reminder
 ```
 
 ---
@@ -51,14 +71,15 @@ Meta WhatsApp Cloud API  →  Customer gets reminder
 
 | Feature | Status |
 |---|---|
-| WhatsApp integration (live number) | ✅ |
-| KB-grounded answers (no hallucination) | ✅ |
-| Google Calendar availability check (tool call) | ✅ |
-| Google Calendar event creation (tool call) | ✅ |
+| WhatsApp integration (live Twilio sandbox number) | ✅ |
+| KB-grounded answers (zero hallucination) | ✅ |
+| Google Calendar availability check (real tool call) | ✅ |
+| Google Calendar event creation (real tool call) | ✅ |
 | T-24h & T-2h WhatsApp reminders | ✅ |
 | Idempotent booking (no duplicate events) | ✅ |
 | Hinglish conversation handling | ✅ |
 | Reminder persistence across restarts (SQLite) | ✅ |
+| Duplicate webhook message deduplication | ✅ |
 
 ---
 
@@ -66,12 +87,12 @@ Meta WhatsApp Cloud API  →  Customer gets reminder
 
 | Component | Choice | Why |
 |---|---|---|
-| **Framework** | FastAPI | Async, minimal, perfect for webhook handlers |
-| **LLM** | Claude Haiku (Anthropic) | Cheapest model with reliable tool calling; free tier available |
-| **KB / RAG** | Simple JSON + keyword search | KB is only 3–5 models; vector DB would be overkill and a liability for grounding |
-| **Calendar** | Google Calendar API + Service Account | Service account avoids OAuth flow complexity; FreeBusy API gives real availability |
+| **Framework** | FastAPI | Async, minimal, perfect for webhook handlers. ThreadPoolExecutor prevents Twilio timeouts |
+| **LLM** | Claude Haiku (Anthropic) | Cheapest model with reliable tool calling; fastest response time |
+| **KB / RAG** | Simple JSON + keyword search | KB is only 3–5 models; vector DB would be overkill and a hallucination risk |
+| **Calendar** | Google Calendar API + Service Account | Service account avoids OAuth flow; FreeBusy API gives real-time availability |
 | **Scheduler** | APScheduler + SQLite jobstore | Built-in persistence — reminder jobs survive server restarts without Redis |
-| **WhatsApp** | Meta WhatsApp Cloud API | Free test number; official API; widely documented |
+| **WhatsApp** | Twilio WhatsApp Sandbox | Free sandbox number; anyone can join; no number verification needed |
 | **Hosting** | Render.com | Free tier, automatic deploys from GitHub, public HTTPS URL for webhook |
 
 ---
@@ -80,19 +101,16 @@ Meta WhatsApp Cloud API  →  Customer gets reminder
 
 ### Prerequisites
 - Python 3.11+
-- A Meta Developer account (free)
+- A Twilio account (free)
 - A Google Cloud account (free)
-- An Anthropic API key (free tier)
-
-On Windows, install Python from [python.org](https://www.python.org/downloads/) and make sure "Add python.exe to PATH" is enabled. If Windows keeps redirecting `python` to the Microsoft Store, disable the `python.exe` and `python3.exe` app execution aliases in Settings.
+- An Anthropic API key
 
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/carbolo-agent.git
+git clone https://github.com/ManavJ8/carbolo-agent.git
 cd carbolo-agent
-# Windows: py -3 -m venv venv
-# macOS/Linux: python3 -m venv venv
+python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
@@ -101,72 +119,71 @@ pip install -r requirements.txt
 
 ```bash
 cp .env.example .env
-# Edit .env with your actual keys (see sections below)
+# Edit .env with your actual keys
 ```
 
 ### 3. Google Calendar service account
 
 1. Go to [console.cloud.google.com](https://console.cloud.google.com)
-2. Create a new project (e.g. "Carbolo")
-3. Enable **Google Calendar API**
-4. Go to **IAM & Admin → Service Accounts → Create Service Account**
-5. Name it "carbolo-agent", click Create
-6. Click the service account → **Keys → Add Key → JSON** → download
-7. Save the downloaded file as `service_account.json` in the project root
-8. Open [calendar.google.com](https://calendar.google.com) → Create a new calendar
-9. Go to calendar **Settings → Share with specific people** → add the service account email (looks like `carbolo-agent@your-project.iam.gserviceaccount.com`) with **"Make changes to events"** permission
-10. Copy the **Calendar ID** (under Integrate calendar) → put in `.env` as `GOOGLE_CALENDAR_ID`
+2. Create project → Enable **Google Calendar API**
+3. Go to **IAM & Admin → Service Accounts → Create Service Account**
+4. Name it "carbolo-agent" → Create
+5. Click the service account → **Keys → Add Key → JSON** → download
+6. Save as `service_account.json` in the project root
+7. Open [calendar.google.com](https://calendar.google.com) → Create a new calendar
+8. Calendar **Settings → Share with specific people** → add the service account email with **"Make changes to events"** permission
+9. Copy the **Calendar ID** → put in `.env` as `GOOGLE_CALENDAR_ID`
 
-### 4. Meta WhatsApp setup
+### 4. Twilio WhatsApp Sandbox setup
 
-1. Go to [developers.facebook.com](https://developers.facebook.com) → Create App → Business
-2. Add WhatsApp product
-3. In **API Setup**: copy the **Phone Number ID** → `WHATSAPP_PHONE_NUMBER_ID` in `.env`
-4. Generate a **Temporary Access Token** → `WHATSAPP_TOKEN` in `.env`
-5. Add your personal number as a test recipient
-6. Webhook setup: set URL to `https://your-app.onrender.com/webhook`, verify token = `carbolo_verify_token`
+1. Go to [console.twilio.com](https://console.twilio.com)
+2. Sign up free → go to **Messaging → Try it out → Send a WhatsApp message**
+3. Copy **Account SID** → `TWILIO_ACCOUNT_SID` in `.env`
+4. Copy **Auth Token** → `TWILIO_AUTH_TOKEN` in `.env`
+5. Note the sandbox number → `TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886` in `.env`
+6. Under **Sandbox Configuration** → set webhook URL to `https://your-app.onrender.com/webhook`
+7. Method: **HTTP POST** → Save
 
-### 5. Run locally (with ngrok for webhook testing)
+### 5. Run locally
 
 ```bash
-# Terminal 1 — run the app
-# Windows: py -3 main.py
-# macOS/Linux: python3 main.py
-
-# Terminal 2 — expose localhost via ngrok
-ngrok http 8000
-# Copy the https URL and use as webhook URL in Meta dashboard
+python main.py
 ```
 
-### 6. Run in demo mode (see reminders fire fast)
+### 6. Run in demo mode (reminders fire in 2 min and 5 min)
 
 ```bash
-# Windows: set DEMO_MODE=true && py -3 main.py
-# macOS/Linux: DEMO_MODE=true python3 main.py
-# Reminders fire 2 min and 5 min after booking instead of 24h/2h
+# Windows
+set DEMO_MODE=true && python main.py
+
+# Mac/Linux
+DEMO_MODE=true python main.py
 ```
 
 ---
 
 ## Deployment (Render.com)
 
-1. Push code to GitHub (make sure `service_account.json` and `.env` are in `.gitignore`)
+1. Push code to GitHub (`service_account.json` and `.env` must be in `.gitignore`)
 2. Go to [render.com](https://render.com) → New → Web Service → Connect GitHub repo
 3. Settings:
    - **Build command**: `pip install -r requirements.txt`
-       - **Start command**: `python main.py` or `py -3 main.py` on Windows local dev
+   - **Start command**: `python main.py`
    - **Plan**: Free
-4. Add all environment variables from `.env` under **Environment**
-5. For `service_account.json`: paste the JSON contents as an env var `GOOGLE_SERVICE_ACCOUNT_JSON`, then modify `tools.py` to load from env (see note below)
-6. Copy the Render URL → update Meta webhook URL
+4. Add environment variables under **Environment** tab:
 
-> **Note on service_account.json in production**: Don't upload the file to GitHub. Instead, set `GOOGLE_SERVICE_ACCOUNT_JSON` as an environment variable in Render containing the full JSON string, then load it in `tools.py`:
-> ```python
-> import json, os
-> from google.oauth2 import service_account
-> sa_info = json.loads(os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON"))
-> creds = service_account.Credentials.from_service_account_info(sa_info, scopes=SCOPES)
-> ```
+```
+ANTHROPIC_API_KEY           = sk-ant-...
+TWILIO_ACCOUNT_SID          = ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_AUTH_TOKEN           = xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_WHATSAPP_NUMBER      = whatsapp:+14155238886
+GOOGLE_CALENDAR_ID          = xxx@group.calendar.google.com
+GOOGLE_SERVICE_ACCOUNT_JSON = { paste entire service_account.json contents }
+DEMO_MODE                   = false
+```
+
+5. Click **Create Web Service** → Render deploys automatically
+6. Copy Render URL → update Twilio sandbox webhook URL
 
 ---
 
@@ -174,7 +191,7 @@ ngrok http 8000
 
 ```
 carbolo-agent/
-├── main.py               # FastAPI app + WhatsApp webhook handler
+├── main.py               # FastAPI app + Twilio webhook handler
 ├── agent.py              # Claude LLM orchestration + tool calling loop
 ├── tools.py              # check_availability() + book_test_drive() (real Calendar API)
 ├── kb.py                 # Knowledge base loader + grounded search
@@ -192,8 +209,9 @@ carbolo-agent/
 
 ```
 Customer: hi, brezza vxi me sunroof hai?
-Agent:    The Brezza VXi doesn't come with a sunroof — that's on the ZXi+ variant. 
-          Want me to share VXi features, or are you interested in the ZXi+?
+Agent:    The Brezza VXi doesn't come with a sunroof — that's on the
+          ZXi+ variant. Want me to share VXi features, or are you
+          interested in the ZXi+?
 
 Customer: vxi theek hai. test drive ho sakta hai weekend pe?
 Agent:    Sure! Here are open slots this weekend:
@@ -208,18 +226,22 @@ Agent:    Done ✅ Test drive booked — Maruti Brezza VXi, Saturday 4:00 PM.
           I'll remind you a day before and 2 hours before. See you then!
 ```
 
+*(A real event appears on Google Calendar; reminders arrive on WhatsApp at T-24h and T-2h)*
+
 ---
 
 ## Known Limitations
 
-- Conversation history is in-memory — clears on server restart (use Redis for production)
-- WhatsApp free test number limits messages to verified numbers only
-- Google Calendar service account token doesn't expire but the calendar must stay shared
-- APScheduler jobs may misfire if the server is down at trigger time (grace period: 1 hour)
+- Conversation history is in-memory — clears on server restart (Redis would fix this)
+- Twilio sandbox limited to 50 messages/day on free trial
+- Twilio sandbox requires users to send a join message before chatting
+- Google Calendar service account credentials stored as env var in production
+- APScheduler jobs may misfire if server is down at trigger time (grace period: 1 hour)
+- Render free tier spins down after 15 min inactivity — first message may be slow
 
 ---
 
-## Bonus Features (if time permits)
+## Bonus Features (stretch goals)
 
 - [ ] Lead qualification (budget, fuel preference, timeline) captured during chat
 - [ ] Reschedule / cancel flow over WhatsApp
