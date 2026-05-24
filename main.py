@@ -2,6 +2,7 @@ import os
 import logging
 from contextlib import asynccontextmanager
 from concurrent.futures import ThreadPoolExecutor
+from fastapi.responses import Response
 
 from fastapi import FastAPI, Form
 from fastapi.responses import PlainTextResponse
@@ -75,12 +76,12 @@ async def receive_message(
     Processes the message in a background thread.
     """
     if not Body or not From:
-        return PlainTextResponse("ok")
+        return Response(content="<Response/>", media_type="application/xml")
 
     # Deduplicate — Twilio sometimes delivers same message twice
     if MessageSid and MessageSid in _seen_message_ids:
         logger.info(f"Duplicate message {MessageSid} ignored")
-        return PlainTextResponse("ok")
+        return Response(content="<Response/>", media_type="application/xml")
     if MessageSid:
         _seen_message_ids.add(MessageSid)
         _seen_message_ids_order.append(MessageSid)
@@ -98,7 +99,7 @@ async def receive_message(
     # This prevents Twilio from timing out and retrying
     executor.submit(_process_message, From, phone, text)
 
-    return PlainTextResponse("ok")
+    return Response(content="<Response/>", media_type="application/xml")
 
 
 def _send_twilio_reply(to: str, message: str):
